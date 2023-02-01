@@ -1,0 +1,144 @@
+name: "gpt"
+platform: "ensemble"
+max_batch_size: 1
+input [
+  {
+    name: "query"
+    data_type: TYPE_STRING
+    dims: [ -1 ]
+  },
+  {
+    name: "len"
+    data_type: TYPE_UINT32
+    dims: [ -1 ]
+  },
+  {
+   name: "bad"
+   data_type: TYPE_STRING
+   dims: [ -1 ]
+  },
+  {
+   name: "stop"
+   data_type: TYPE_STRING
+   dims: [ -1 ]
+  },
+  {
+    name: "runtime_top_k"
+    data_type: TYPE_UINT32
+    dims: [ 1 ]
+    optional: true
+  },
+  {
+    name: "random_seed"
+    data_type: TYPE_UINT64
+    dims: [ 1 ]
+    optional: true
+  }
+]
+output [
+  {
+    name: "text"
+    data_type: TYPE_STRING
+    dims: [ -1, -1 ]
+  }
+]
+ensemble_scheduling {
+  step [
+    {
+      model_name: "preprocessing"
+      model_version: -1
+      input_map {
+        key: "QUERY"
+        value: "query"
+      }
+      input_map {
+        key: "REQUEST_OUTPUT_LEN"
+        value: "len"
+      }
+      input_map {
+        key: "BAD_WORDS_DICT"
+        value: "bad"
+      }
+      input_map {
+        key: "STOP_WORDS_DICT"
+        value: "stop"
+      }
+      output_map {
+        key: "INPUT_ID"
+        value: "_INPUT_ID"
+      }
+      output_map {
+        key: "BAD_WORDS_IDS"
+        value: "_BAD_WORDS_IDS"
+      }
+      output_map {
+        key: "STOP_WORDS_IDS"
+        value: "_STOP_WORDS_IDS"
+      }
+      output_map {
+        key: "REQUEST_INPUT_LEN"
+        value: "_REQUEST_INPUT_LEN"
+      }
+      output_map {
+        key: "REQUEST_OUTPUT_LEN"
+        value: "_REQUEST_OUTPUT_LEN"
+      }
+    },
+    {
+      model_name: "fastertransformer"
+      model_version: -1
+      input_map {
+        key: "input_ids"
+        value: "_INPUT_ID"
+      }
+      input_map {
+        key: "input_lengths"
+        value: "_REQUEST_INPUT_LEN"
+      }
+      input_map {
+        key: "request_output_len"
+        value: "_REQUEST_OUTPUT_LEN"
+      }
+      input_map {
+          key: "runtime_top_k"
+          value: "runtime_top_k"
+      }
+      input_map {
+          key: "random_seed"
+          value: "random_seed"
+      }
+      input_map {
+          key: "stop_words_list"
+          value: "_STOP_WORDS_IDS"
+      }
+      input_map {
+          key: "bad_words_list"
+          value: "_BAD_WORDS_IDS"
+      }
+      output_map {
+        key: "output_ids"
+        value: "_TOKENS_BATCH"
+      }
+      output_map {
+        key: "response_input_lengths"
+        value: "_RESPONSE_INPUT_LENGTHS"
+      }
+    },
+    {
+      model_name: "postprocessing"
+      model_version: -1
+      input_map {
+        key: "TOKENS_BATCH"
+        value: "_TOKENS_BATCH"
+      },
+      input_map {
+        key: "RESPONSE_INPUT_LENGTHS"
+        value: "_RESPONSE_INPUT_LENGTHS"
+      },
+      output_map {
+        key: "OUTPUT"
+        value: "text"
+      }
+    }
+  ]
+}
