@@ -45,11 +45,15 @@ class TritonPythonModel:
         # Parse model output configs and convert Triton types to numpy types
         input_names = ["INPUT_ID", "REQUEST_INPUT_LEN", "BAD_WORDS_IDS", "STOP_WORDS_IDS"]
         for input_name in input_names:
-          setattr(self,
-              input_name.lower() + "_dtype",
-              pb_utils.triton_string_to_numpy(pb_utils.get_output_config_by_name(
-                model_config, input_name)['data_type'])
-          )
+            setattr(
+                self,
+                f"{input_name.lower()}_dtype",
+                pb_utils.triton_string_to_numpy(
+                    pb_utils.get_output_config_by_name(model_config, input_name)[
+                        'data_type'
+                    ]
+                ),
+            )
 
         cur_folder = Path(__file__).parent
         self.encoder = encoder.get_encoder(str(cur_folder/VOCAB_FILE), str(cur_folder/MERGES_FILE))
@@ -78,7 +82,7 @@ class TritonPythonModel:
 
         # Every Python backend must iterate over everyone of the requests
         # and create a pb_utils.InferenceResponse for each of them.
-        for idx, request in enumerate(requests):
+        for request in requests:
             # Get input tensors
             query = pb_utils.get_input_tensor_by_name(request, 'QUERY').as_numpy()
             request_output_len = pb_utils.get_input_tensor_by_name(request, 'REQUEST_OUTPUT_LEN').as_numpy()

@@ -25,9 +25,7 @@ def get_tokenizer(vocab_file=None, bpe_file=None):
     vocab_file = vocab_file if vocab_file is not None else cur_folder / "gpt2-vocab.json"
     bpe_file = bpe_file if bpe_file is not None else cur_folder / "gpt2-merges.txt"
 
-    tokenizer = encoder.get_encoder(str(vocab_file), str(bpe_file))
-
-    return tokenizer
+    return encoder.get_encoder(str(vocab_file), str(bpe_file))
 
 
 def to_word_list_format(word_dict):
